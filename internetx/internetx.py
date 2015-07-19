@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 et
+"""
+TODO:
+* make _info and other methods to be bulk operation methods
+"""
 
 import sys
 import requests
@@ -20,11 +24,15 @@ class Helper:
                     child = Helper.convert_json2xml(doc=value, root=key)
                     children.append(child)
                 elif isinstance(value, list):
-                    raise NotImplementedError('Type of {} is not implemented yet, is it a {}?'.format(key, type(value)))
+                    for item in value:
+                        child = Helper.convert_json2xml(doc=item, root=key)
+                        children.append(child)
                 elif isinstance(value, (str, int, float)):
                     child = ET.Element(key)
                     child.text = str(value)
                     children.append(child)
+                elif value is None:
+                    continue
                 else:
                     raise NotImplementedError('Type of {} is not implemented yet, is it a {}?'.format(key, type(value)))
         return children
@@ -66,7 +74,14 @@ class Internetx:
         if fun_codes is not None:
             self.fun_codes = fun_codes
         else:
-            self.fun_codes = {'contact_info': '0304', 'domain_info': '0105', 'zone_info': '0205', }
+            self.fun_codes = {
+                'contact_info': '0304',
+                'domain_info': '0105',
+                'domain_transfer_in': '0104',
+                'domain_transfer_out': '0106002',
+                'zone_create': '0201',
+                'zone_info': '0205',
+            }
 
     def _parse_api_call_properties(self, api_call_properties):
         defaults = {'offset': 0, 'limit': 30, 'subusers': False, }
@@ -77,7 +92,7 @@ class Internetx:
         return api_call_properties
 
     def _call(self, task):
-        _request = {'auth': {'user': self.username, 'password': self.password, 'context': self.context, }}
+        _request = {'auth': {'user': self.username, 'password': self.password, 'context': self.context, }, 'language': 'en'}
         request = Helper.convert_json2xml(doc=_request, root='request')
         request.append(task)
 
@@ -100,7 +115,7 @@ class Internetx:
             fields[field.tag] = field.text
         return fields
 
-    def _contact_parse(self, object_xml):
+    def _contact_parse_response(self, object_xml):
         result = {}
         for field in object_xml:
             if field.tag in ['owner']:
@@ -113,7 +128,7 @@ class Internetx:
                 result[field.tag] = field.text
         return result
 
-    def _domain_parse(self, object_xml):
+    def _domain_parse_response(self, object_xml):
         result = {}
         for field in object_xml:
             if field.tag in ['owner']:
@@ -126,7 +141,7 @@ class Internetx:
                 result[field.tag] = field.text
         return result
 
-    def _zone_parse(self, object_xml):
+    def _zone_parse_response(self, object_xml):
         result = {}
         for field in object_xml:
             if field.tag in ['owner', 'soa']:
@@ -144,7 +159,7 @@ class Internetx:
         _task = {'code': self.fun_codes['domain_info'], 'domain': {'name': name, }, }
         task = Helper.convert_json2xml(doc=_task, root='task')
         server_response = self._call(task)
-        result = self._domain_parse(server_response.find('./result/data/domain'))
+        result = self._domain_parse_response(server_response.find('./result/data/domain'))
         return result
 
     def domain_list(self, api_call_properties={}):
@@ -166,8 +181,34 @@ class Internetx:
 
         result = []
         for object_xml in server_response.findall('./result/data/domain'):
-            fields = self._domain_parse(object_xml)
+            fields = self._domain_parse_response(object_xml)
             result.append(fields)
+        return result
+
+    def domain_transfer_in(self, params, api_call_properties={}):
+        api_call_properties = self._parse_api_call_properties(api_call_properties)
+        if isinstance(params, dict):
+            _task = {
+                'code': self.fun_codes['domain_transfer_in'],
+                'default': {
+                    'ownerc': params['ownerc'],
+                    'adminc': params['adminc'],
+                    'techc': params['techc'],
+                    'zonec': params['zonec'],
+                    'nserver': params['nserver'],
+                    'confirm_order': int(True),
+                },
+                'domain': {
+                    'name': params['name'],
+                    'authinfo': params['authinfo'],
+                },
+            }
+        else:
+            pass  #TODO
+
+        task = Helper.convert_json2xml(doc=_task, root='task')
+        server_response = self._call(task)
+        result = self._domain_parse_response(server_response.find('./result'))
         return result
 
     def zone_info(self, name, api_call_properties={}):
@@ -175,7 +216,7 @@ class Internetx:
         _task = {'code': self.fun_codes['zone_info'], 'zone': {'name': name, }, }
         task = Helper.convert_json2xml(doc=_task, root='task')
         server_response = self._call(task)
-        result = self._zone_parse(server_response.find('./result/data/zone'))
+        result = self._zone_parse_response(server_response.find('./result/data/zone'))
         return result
 
     def zone_list(self, api_call_properties={}):
@@ -197,8 +238,30 @@ class Internetx:
 
         result = []
         for object_xml in server_response.findall('./result/data/zone'):
-            fields = self._domain_parse(object_xml)
+            fields = self._domain_parse_response(object_xml)
             result.append(fields)
+        return result
+
+    def zone_create(self, params, api_call_properties={}):
+        api_call_properties = self._parse_api_call_properties(api_call_properties)
+        if isinstance(params, dict):
+            _task = {
+                'code': self.fun_codes['zone_create'],
+                'zone': {
+                    'name': params['name'],
+                    'ns_action': 'complete',
+                    'nserver': params['nserver'],
+                    'soa': params['soa'],
+                    'rr': params['rr'],
+                    'www_include': int(False),
+                },
+            }
+        else:
+            pass  #TODO
+
+        task = Helper.convert_json2xml(doc=_task, root='task')
+        server_response = self._call(task)
+        result = self._zone_parse_response(server_response.find('./result'))
         return result
 
     def contact_info(self, name, api_call_properties={}):
@@ -206,7 +269,7 @@ class Internetx:
         _task = {'code': self.fun_codes['contact_info'], 'handle': {'id': str(name), }, }
         task = Helper.convert_json2xml(doc=_task, root='task')
         server_response = self._call(task)
-        result = self._contact_parse(server_response.find('./result/data/handle'))
+        result = self._contact_parse_response(server_response.find('./result/data/handle'))
         return result
 
     def contact_list(self, api_call_properties={}):
@@ -228,6 +291,6 @@ class Internetx:
 
         result = []
         for object_xml in server_response.findall('./result/data/handle'):
-            fields = self._domain_parse(object_xml)
+            fields = self._domain_parse_response(object_xml)
             result.append(fields)
         return result
