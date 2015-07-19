@@ -29,6 +29,15 @@ class Helper:
                     raise NotImplementedError('Type of {} is not implemented yet, is it a {}?'.format(key, type(value)))
         return children
 
+    @staticmethod
+    def prettify(element):
+        """Return a pretty-printed XML string for the Element.
+        """
+        raw_string = ET.tostring(element, 'utf-8')
+
+        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+        return text_re.sub('>\g<1></', raw_string.decode())
+
 #def convert_json2xml(doc, root):
 #    children = Tag(name=root)
 #    if isinstance(doc, dict):
@@ -222,12 +231,3 @@ class Internetx:
             fields = self._domain_parse(object_xml)
             result.append(fields)
         return result
-
-
-def _prettify(element):
-    """Return a pretty-printed XML string for the Element.
-    """
-    raw_string = ET.tostring(element, 'utf-8')
-
-    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-    return text_re.sub('>\g<1></', raw_string.decode())
