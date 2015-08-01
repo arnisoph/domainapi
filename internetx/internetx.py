@@ -65,11 +65,13 @@ class Helper:
 
 
 class Internetx:
-    def __init__(self, url, username, password, context, fun_codes=None):
+    def __init__(self, url, username, password, context, language='en', owner=None, fun_codes=None):
         self.url = url
         self.username = username
         self.password = password
         self.context = context
+        self.language = language
+        self.owner = None
 
         if fun_codes is not None:
             self.fun_codes = fun_codes
@@ -92,7 +94,11 @@ class Internetx:
         return api_call_properties
 
     def _call(self, task):
-        _request = {'auth': {'user': self.username, 'password': self.password, 'context': self.context, }, 'language': 'en'}
+        _request = {'auth': {'user': self.username, 'password': self.password, 'context': self.context, }, 'language': self.language, }
+
+        if self.owner:
+            _request['owner'] = self.owner
+
         request = Helper.convert_json2xml(doc=_request, root='request')
         request.append(task)
 
