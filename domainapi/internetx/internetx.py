@@ -176,7 +176,7 @@ class Internetx:
                 },
             }
         else:
-            pass  #TODO
+            pass  # TODO
 
         task = Helper.convert_json2xml(doc=_task, root='task')
         server_response = self._call(task)
