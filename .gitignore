@@ -38,6 +38,7 @@ ehthumbs.db
 Thumbs.db
 *.pyc
 *.slsc
+.tox/
 
 # IDEs and editors #
 ####################
@@ -56,3 +57,7 @@ test/.env
 test/.vagrant/
 test/nodes.yaml
 *.box
+
+
+docs/_build
+MANIFEST
