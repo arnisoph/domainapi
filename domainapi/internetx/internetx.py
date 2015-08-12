@@ -6,45 +6,11 @@ TODO:
 * make _info and other methods to be bulk operation methods
 """
 
-import sys
 import requests
 from xml.etree import ElementTree as ET
-import pprint
-import re
-import json
+from domainapi.misc import Helper
+#import pprint
 
-
-class Helper:
-    @staticmethod
-    def convert_json2xml(doc, root):
-        children = ET.Element(root)
-        if isinstance(doc, dict):
-            for key, value, in doc.items():
-                if isinstance(value, dict):
-                    child = Helper.convert_json2xml(doc=value, root=key)
-                    children.append(child)
-                elif isinstance(value, list):
-                    for item in value:
-                        child = Helper.convert_json2xml(doc=item, root=key)
-                        children.append(child)
-                elif isinstance(value, (str, int, float)):
-                    child = ET.Element(key)
-                    child.text = str(value)
-                    children.append(child)
-                elif value is None:
-                    continue
-                else:
-                    raise NotImplementedError('Type of {} is not implemented yet, is it a {}?'.format(key, type(value)))
-        return children
-
-    @staticmethod
-    def prettify(element):
-        """Return a pretty-printed XML string for the Element.
-        """
-        raw_string = ET.tostring(element, 'utf-8')
-
-        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-        return text_re.sub('>\g<1></', raw_string.decode())
 
 #def convert_json2xml(doc, root):
 #    children = Tag(name=root)
@@ -263,7 +229,7 @@ class Internetx:
                 },
             }
         else:
-            pass  #TODO
+            pass  # TODO
 
         task = Helper.convert_json2xml(doc=_task, root='task')
         server_response = self._call(task)
