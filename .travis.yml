@@ -1,16 +1,19 @@
+#sudo: required
+dist: trusty
+
 language: python
 python:
   - '3.4'
+  - '3.5'
   - '2.7'
+
 env:
   #- TOX_ENV=standard
   - TOX_ENV=flake8
   - TOX_ENV=docs
-#addons:
-#  apt:
-#    packages:
-#      - tree
+
 install:
   - pip install tox
+
 script:
   - tox -e $TOX_ENV
