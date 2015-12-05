@@ -11,6 +11,7 @@ class Helper:
     """
     Helper class providing useful methods
     """
+
     @staticmethod
     def convert_json2xml(doc, root):
         children = ET.Element(root)

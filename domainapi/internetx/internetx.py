@@ -9,8 +9,6 @@ TODO:
 import requests
 from xml.etree import ElementTree as ET
 from domainapi.misc import Helper
-#import pprint
-
 
 #def convert_json2xml(doc, root):
 #    children = Tag(name=root)
